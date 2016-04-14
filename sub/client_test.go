@@ -151,7 +151,7 @@ func TestSubscriptionGet(t *testing.T) {
 	}
 
 	subscription, _ := New(subParams)
-	target, err := Get(subscription.ID, &stripe.SubParams{Customer: cust.ID})
+	target, err := Get(subscription.ID, nil)
 
 	if err != nil {
 		t.Error(err)
@@ -195,7 +195,7 @@ func TestSubscriptionCancel(t *testing.T) {
 	}
 
 	subscription, _ := New(subParams)
-	s, err := Cancel(subscription.ID, &stripe.SubParams{Customer: cust.ID})
+	s, err := Cancel(subscription.ID, nil)
 
 	if err != nil {
 		t.Error(err)
@@ -241,7 +241,6 @@ func TestSubscriptionUpdate(t *testing.T) {
 
 	subscription, _ := New(subParams)
 	updatedSub := &stripe.SubParams{
-		Customer:   cust.ID,
 		NoProrate:  true,
 		Quantity:   13,
 		TaxPercent: 20.0,
@@ -322,7 +321,7 @@ func TestSubscriptionDiscount(t *testing.T) {
 		t.Errorf("Coupon id %q does not match expected id %q\n", target.Discount.Coupon.ID, subParams.Coupon)
 	}
 
-	_, err = discount.DelSub(cust.ID, target.ID)
+	_, err = discount.DelSub(target.ID)
 
 	if err != nil {
 		t.Error(err)
@@ -366,7 +365,23 @@ func TestSubscriptionList(t *testing.T) {
 		New(subParams)
 	}
 
-	i := List(&stripe.SubListParams{Customer: cust.ID})
+	i := List(nil)
+	for i.Next() {
+		if i.Sub() == nil {
+			t.Error("No nil values expected")
+		}
+
+		if i.Meta() == nil {
+			t.Error("No metadata returned")
+		}
+	}
+	if err := i.Err(); err != nil {
+		t.Error(err)
+	}
+
+	params := &stripe.SubListParams{Customer: cust.ID, Plan: "test"}
+	params.Filters.AddFilter("limit", "", "3")
+	i = List(params)
 	for i.Next() {
 		if i.Sub() == nil {
 			t.Error("No nil values expected")

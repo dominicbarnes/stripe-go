@@ -27,6 +27,7 @@ type SubParams struct {
 type SubListParams struct {
 	ListParams
 	Customer string
+	Plan     string
 }
 
 // Sub is the resource representing a Stripe subscription.
